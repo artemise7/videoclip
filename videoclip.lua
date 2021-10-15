@@ -36,7 +36,7 @@ local config = {
     -- Use the slowest preset that you have patience for.
     -- https://trac.ffmpeg.org/wiki/Encode/H.264
     preset = 'faster',
-    video_format = 'mp4', -- mp4, vp9, vp8
+    video_format = 'mp4', -- mp4, vp9, vp8, webp
     video_bitrate = '1M',
     video_width = -2,
     video_height = 480,
@@ -146,9 +146,12 @@ local function set_encoding_settings()
     elseif config.video_format == 'vp9' then
         config.video_codec = 'libvpx-vp9'
         config.video_extension = '.webm'
-    else
+    elseif config.video_format == 'vp8' then
         config.video_codec = 'libvpx'
         config.video_extension = '.webm'
+    else 
+		config.video_codec = 'libwebp'
+        config.video_extension = '.webp'
     end
 
     if config.audio_format == 'aac' then
@@ -213,29 +216,31 @@ function encoder.append_embed_subs_args(args)
     end
     table.insert(args, #args, table.concat { '--sid=', mp.get_property("sid") })
     table.insert(args, #args, table.concat { '--sub-delay=', mp.get_property("sub-delay") })
+    print(args)
     return args
 end
 
 encoder.mkargs_video = function(clip_filename)
     local clip_path = utils.join_path(config.video_folder_path, clip_filename .. config.video_extension)
+    print(clip_path)
     local args = {
         'mpv',
         mp.get_property('path'),
         '--loop-file=no',
         '--no-ocopy-metadata',
         '--no-sub',
-        '--audio-channels=2',
+--      '--audio-channels=2',
         '--oacopts-add=vbr=on',
         '--oacopts-add=application=voip',
         '--oacopts-add=compression_level=10',
         '--vf-add=format=yuv420p',
         table.concat { '--ovc=', config.video_codec },
-        table.concat { '--oac=', config.audio_codec },
+--      table.concat { '--oac=', config.audio_codec },
         table.concat { '--start=', main_menu.timings['start'] },
         table.concat { '--end=', main_menu.timings['end'] },
-        table.concat { '--aid=', mp.get_property("aid") }, -- track number
-        table.concat { '--mute=', mp.get_property("mute") },
-        table.concat { '--volume=', mp.get_property('volume') },
+--      table.concat { '--aid=', mp.get_property("aid") }, -- track number
+--      table.concat { '--mute=', mp.get_property("mute") },
+--      table.concat { '--volume=', mp.get_property('volume') },
         table.concat { '--ovcopts-add=b=', config.video_bitrate },
         table.concat { '--oacopts-add=b=', config.audio_bitrate },
         table.concat { '--ovcopts-add=crf=', config.video_quality },
@@ -465,7 +470,7 @@ pref_menu.audio_bitrates = {
     selected = 1,
 }
 
-pref_menu.vid_formats = { 'mp4', 'vp9', 'vp8', }
+pref_menu.vid_formats = { 'mp4', 'vp9', 'vp8', 'webp'}
 pref_menu.aud_formats = { 'aac', 'opus', }
 
 function pref_menu:get_selected_resolution()
