@@ -229,7 +229,7 @@ encoder.mkargs_video = function(clip_filename)
         '--loop-file=no',
         '--no-ocopy-metadata',
         '--no-sub',
---      '--audio-channels=2',
+        '--audio-channels=2',
         '--oacopts-add=vbr=on',
         '--oacopts-add=application=voip',
         '--oacopts-add=compression_level=10',
@@ -240,7 +240,7 @@ encoder.mkargs_video = function(clip_filename)
         table.concat { '--end=', main_menu.timings['end'] },
 --      table.concat { '--aid=', mp.get_property("aid") }, -- track number
 --      table.concat { '--mute=', mp.get_property("mute") },
---      table.concat { '--volume=', mp.get_property('volume') },
+        table.concat { '--volume=', mp.get_property('volume') },
         table.concat { '--ovcopts-add=b=', config.video_bitrate },
         table.concat { '--oacopts-add=b=', config.audio_bitrate },
         table.concat { '--ovcopts-add=crf=', config.video_quality },
@@ -282,14 +282,14 @@ encoder.mkargs_audio = function(clip_filename)
 end
 
 encoder.create_clip = function(clip_type)
-    main_menu:close();
+    --main_menu:close();
     if clip_type == nil then
         return
     end
 
     if not main_menu.timings:validate() then
         notify("Wrong timings. Aborting.", "warn", 2)
-        return
+        main_menu:set_time(3);
     end
 
     local clip_filename = construct_filename()
@@ -371,8 +371,8 @@ end
 main_menu = Menu:new()
 
 main_menu.keybindings = {
-    { key = 's', fn = function() main_menu:set_time('start') end },
-    { key = 'e', fn = function() main_menu:set_time('end') end },
+    { key = 's', fn = function() main_menu:set_time(1) end },
+    { key = 'e', fn = function() main_menu:set_time(5) end },
     { key = 'S', fn = function() main_menu:set_time_sub('start') end },
     { key = 'E', fn = function() main_menu:set_time_sub('end') end },
     { key = 'r', fn = function() main_menu:reset_timings() end },
@@ -380,12 +380,12 @@ main_menu.keybindings = {
     { key = 'C', fn = function() force_resolution(1920, -2, encoder.create_clip, 'video') end },
     { key = 'a', fn = function() encoder.create_clip('audio') end },
     { key = 'p', fn = function() pref_menu:open() end },
-    { key = 'o', fn = function() mp.commandv('run', 'xdg-open', 'https://streamable.com/') end },
     { key = 'ESC', fn = function() main_menu:close() end },
 }
 
-function main_menu:set_time(property)
-    self.timings[property] = mp.get_property_number('time-pos')
+function main_menu:set_time(second)
+    self.timings['start'] = mp.get_property_number('time-pos')
+    self.timings['end'] = mp.get_property_number('time-pos')+second
     self:update()
 end
 
@@ -418,8 +418,8 @@ function main_menu:update()
     osd:tab():item('Start time: '):append(human_readable_time(self.timings['start'])):newline()
     osd:tab():item('End time: '):append(human_readable_time(self.timings['end'])):newline()
     osd:submenu('Timings '):italics('(+shift use sub timings)'):newline()
-    osd:tab():item('s: '):append('Set start'):newline()
-    osd:tab():item('e: '):append('Set end'):newline()
+    osd:tab():item('s: '):append('Set 1s'):newline()
+    osd:tab():item('e: '):append('Set 5s'):newline()
     osd:tab():item('r: '):append('Reset'):newline()
     osd:submenu('Create clip '):italics('(+shift to force fullHD preset)'):newline()
     osd:tab():item('c: '):append('video clip'):newline()
